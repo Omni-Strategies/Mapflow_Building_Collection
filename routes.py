@@ -71,8 +71,8 @@ def create_processings(request: MapflowProcessingCreateRequest) -> List[Dict[str
         client.wait_for_processing(resp.id)
         geojson = client.download_results(resp.id)
         print("Feature count:", len(geojson.get("features", [])))
-        print("First feature:", geojson["features"][0] if geojson.get("features") else "NONE")
         results = mapflow_geojson_to_propertiesjson(geojson)
+        print("Length of results:", len(results))
         return results            # ← return the buildings list
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))

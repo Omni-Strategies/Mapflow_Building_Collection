@@ -178,7 +178,7 @@ class MapflowClient:
         payload = {
             "name": request.name,
             "projectId": request.project_id,
-            "wdName": request.wd_name,
+            "wdName": request.wd_name,  
             "params": {
                 "sourceParams": {
                     "dataProvider": {
@@ -187,6 +187,11 @@ class MapflowClient:
                     }
                 }
             },
+            "blocks": [
+                {"name": "Heights", "enabled": True},
+                {"name": "Simplification", "enabled": True},
+                {"name": "Classification", "enabled": True},
+            ],
         }
         if request.aoi_polygon is not None:
             # Handle both bare Geometry and FeatureCollection inputs
