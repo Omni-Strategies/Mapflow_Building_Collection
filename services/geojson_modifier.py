@@ -11,7 +11,8 @@ def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
         props = feature.get("properties", {}) or {}
         geometry = feature.get("geometry", {}) or {}
 
-        coords = geometry.get("coordinates", [[]])[0]
+        raw_coords = geometry.get("coordinates", [])
+        coords = raw_coords[0] if raw_coords else []
         if coords:
             lons = [c[0] for c in coords]
             lats = [c[1] for c in coords]
@@ -79,7 +80,8 @@ def mapflow_geojson_to_properties(geojson_path: str, output_dir: str = "finaljso
         props = feature.get("properties", {}) or {}
         geometry = feature.get("geometry", {}) or {}
 
-        coords = geometry.get("coordinates", [[]])[0]
+        raw_coords = geometry.get("coordinates", [])
+        coords = raw_coords[0] if raw_coords else []
         if coords:
             lons = [c[0] for c in coords]
             lats = [c[1] for c in coords]
