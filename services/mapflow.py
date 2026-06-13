@@ -7,18 +7,28 @@ from typing import Any, Dict, Optional, Tuple
 import requests
 from dotenv import load_dotenv
 
-from schema import (
-    Geometry,
-    MapflowCostEstimateRequest,
-    MapflowCostEstimateResponse,
-    MapflowCreditsResponse,
-    MapflowProcessingCreateRequest,
-    MapflowProcessingCreateResponse,
-    MapflowProcessingHistoryResponse,
-    MapflowProcessingStatusResponse,
-    MapflowProjectCreateRequest,
-    MapflowProjectCreateResponse,
-)
+try:
+    from schema import (
+        Geometry,
+        MapflowCreditsResponse,
+        MapflowProcessingCreateRequest,
+        MapflowProcessingCreateResponse,
+        MapflowProcessingHistoryResponse,
+        MapflowProcessingStatusResponse,
+        MapflowProjectCreateRequest,
+        MapflowProjectCreateResponse,
+    )
+except ModuleNotFoundError:
+    from ..schema import (
+        Geometry,
+        MapflowCreditsResponse,
+        MapflowProcessingCreateRequest,
+        MapflowProcessingCreateResponse,
+        MapflowProcessingHistoryResponse,
+        MapflowProcessingStatusResponse,
+        MapflowProjectCreateRequest,
+        MapflowProjectCreateResponse,
+    )
 
 BASE_URL = "https://api.mapflow.ai/rest"
 # Prefer dotenv file by default (load vars from .env), fallback to plain key file if necessary
@@ -65,7 +75,6 @@ class MapflowClient:
         api_key = read_key()
         if api_key:
             self.api_key = api_key.strip()
-            print(f"key: {self.api_key}")
         else:
             self.api_key = read_key(key_file)
         self.base_url = base_url
@@ -73,13 +82,12 @@ class MapflowClient:
             "Authorization": f"Basic {self.api_key}",
             "Content-Type": "application/json",
         }
-        print(self.headers)
     
     def wait_for_processing(self, processing_id: str, poll_interval: int = 10, timeout: int = 600) -> str:
         elapsed = 0
         while elapsed < timeout:
-            status = self.get_processing_status(processing_id)
-             # or however you access it
+            status_response = self.get_processing_status(processing_id)
+            status = status_response.status
             print(f"Processing status: {status} ({elapsed}s elapsed)")
             
             if status == "OK":                          # ← was "FINISHED"
@@ -129,7 +137,7 @@ class MapflowClient:
     def get_processing_status(self, processing_id: str) -> MapflowProcessingStatusResponse:
         """Get processing status and details."""
         resp = self._get(f"/processings/{processing_id}/v2")
-        return resp["status"]
+        return MapflowProcessingStatusResponse.model_validate(resp)
 
     def calculate_total_cost(self, provider_name: str = "Mapbox", wd_id: str = "8cb13006-a299-4df6-b47d-91bd63de947f", area_sq_km: float = 1.5, aoi_polygon: Optional[Geometry] = None) -> int: 
         """Estimate processing cost in credits.
@@ -220,7 +228,6 @@ class MapflowClient:
 
     def _get(self, path: str) -> Dict[str, Any]:
         response = requests.get(f"{self.base_url}{path}", headers=self.headers)
-        print(response.text)
         response.raise_for_status()
         return response.json()
 

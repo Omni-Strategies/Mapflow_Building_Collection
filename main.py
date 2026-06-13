@@ -2,9 +2,14 @@ import json
 import time
 from pathlib import Path
 
-from services.mapflow import MapflowClient
-from services.geojson_modifier import mapflow_geojson_to_properties
-from services.kml_export import json_to_kml
+try:
+    from services.mapflow import MapflowClient
+    from services.geojson_modifier import mapflow_geojson_to_properties
+    from services.kml_export import json_to_kml
+except ModuleNotFoundError:
+    from .services.mapflow import MapflowClient
+    from .services.geojson_modifier import mapflow_geojson_to_properties
+    from .services.kml_export import json_to_kml
 
 project_id = "8ebb9d48-299c-47cb-afa9-e61dc1729f71"
 
@@ -67,4 +72,3 @@ def mapflow_building_analysis() -> None:
 
 if __name__ == "__main__":
     mapflow_building_analysis()
-

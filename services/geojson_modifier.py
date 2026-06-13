@@ -4,6 +4,14 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+def _area_as_int(value: Any) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
+
+
 def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
 
@@ -62,16 +70,17 @@ def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
             "rateable_value": None,
             "lvd_val_no": None,
         }
-        if int(props.get("area")) > 1000:
+        area_int = _area_as_int(area)
+        if area_int > 1000:
             property_dict["no_of_washrooms"] = "4"
-        elif int(props.get("area")) > 700 and int(props.get("area")) < 1000:
+        elif 700 < area_int < 1000:
             property_dict["no_of_washrooms"] = "3"
-        elif int(props.get("area", 0)) > 500:
+        elif area_int > 500:
             property_dict["no_of_washrooms"] = "2"
         else:
             property_dict["no_of_washrooms"] = "1"
 
-        property_dict["no_of_otherrooms"] = str(int(props.get("area")) // 100)
+        property_dict["no_of_otherrooms"] = str(area_int // 100)
         results.append(property_dict)
 
     return results
@@ -157,4 +166,3 @@ def mapflow_geojson_to_properties(geojson_path: str, output_dir: str = "finaljso
         output_path = fallback_path
 
     return results
-
