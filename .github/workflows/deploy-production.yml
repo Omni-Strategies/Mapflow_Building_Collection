@@ -1,0 +1,75 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REGISTRY: 228059968143.dkr.ecr.us-east-2.amazonaws.com
+  ECR_REPOSITORY: mapflow-building-collection
+  ECS_CLUSTER: Production
+  ECS_SERVICE: mapflow-building-collection
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          MAPFLOW_API_KEY: test_key_for_ci
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -q
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}"
+          docker build \
+            --platform linux/amd64 \
+            -t "${IMAGE_URI}:prod" \
+            -t "${IMAGE_URI}:${GITHUB_SHA}" \
+            .
+          docker push "${IMAGE_URI}:prod"
+          docker push "${IMAGE_URI}:${GITHUB_SHA}"
+
+      - name: Redeploy ECS service
+        run: |
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${ECS_SERVICE}" \
+            --force-new-deployment \
+            --region "${AWS_REGION}"
+          aws ecs wait services-stable \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}" \
+            --region "${AWS_REGION}"
+
+      - name: Verify health endpoint
+        run: curl --fail --silent --show-error https://mapflow-api.omnistrategies.net/ping
