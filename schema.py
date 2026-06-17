@@ -75,7 +75,6 @@ class MapflowProcessingCreateRequest(BaseModel):
     name: str = "Building Analysis"
     provider_name: str = "Mapbox"
     wd_name: str = "🏠 Buildings"
-    area_sq_km: float = 1.5
     aoi_polygon: Optional[Geometry] = None
 
     model_config = {"populate_by_name": True}
