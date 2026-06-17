@@ -95,10 +95,10 @@ def create_processings(request: MapflowProcessingCreateRequest) -> List[Dict[str
 def get_processing_result_json(processing_id: str) -> MapflowDownloadResponse:
     try:
         output_path = get_mapflow_client().download_results(processing_id)
-        return mapflow_geojson_to_propertiesjson(output_path)
+        results = mapflow_geojson_to_propertiesjson(output_path)
+        return MapflowDownloadResponse(properties=results)  # ← wrap it
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-
 
 @app.get("/processing/history", response_model=MapflowProcessingHistoryResponse)
 def get_processing_history(page: int = 1, per_page: int = 50, status_filter: str = "status=OK") -> MapflowProcessingHistoryResponse:

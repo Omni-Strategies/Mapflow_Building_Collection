@@ -93,7 +93,7 @@ class MapflowDownloadRequest(BaseModel):
 
 
 class MapflowDownloadResponse(BaseModel):
-    output_path: str
+    properties: List[Dict[str, Any]]
 
 
 
