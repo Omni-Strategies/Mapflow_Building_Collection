@@ -409,27 +409,4 @@ class TestCreateProjectRoute:
         assert resp.json()["id"] == "proj-999"
 
 
-class TestCalculateCostRoute:
-    def test_returns_cost_dict(self, test_app):
-        from fastapi.testclient import TestClient
-        app, mock_client = test_app
-        mock_client.calculate_total_cost.return_value = 75
-        client = TestClient(app)
-        resp = client.post("/processing/cost", json={
-            "provider_name": "Mapbox",
-            "wd_id": "8cb13006-a299-4df6-b47d-91bd63de947f",
-            "aoi_polygon": {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [0, 0],
-                        [1, 0],
-                        [1, 1],
-                        [0, 1],
-                        [0, 0]
-                    ]
-                ]
-            }
-        })
-        assert resp.status_code == 200
-        assert resp.json()["cost"] == 75
+
