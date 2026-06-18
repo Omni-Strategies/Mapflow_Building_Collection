@@ -68,7 +68,7 @@ def calculate_cost(request: MapflowCostEstimateRequest) -> dict:
         raise HTTPException(status_code=500, detail=str(exc))
 
 @app.post("/processing")
-def create_processings(request: MapflowProcessingCreateRequest) -> List[Dict[str, Any]]:
+def create_processings(request: MapflowProcessingCreateRequest) -> str:
     client = get_mapflow_client()
     try:
         resp = client.create_processing(
@@ -78,16 +78,16 @@ def create_processings(request: MapflowProcessingCreateRequest) -> List[Dict[str
             wd_name=request.wd_name,
             aoi_polygon=request.aoi_polygon,
         )
-        client.wait_for_processing(resp.id)
-        geojson = client.download_results(resp.id)
-        print("Feature count:", len(geojson.get("features", [])))
-        results = mapflow_geojson_to_propertiesjson(geojson)
-        print("Length of results:", len(results))
-        return results            # ← return the buildings list
+    
+        return resp.id         
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str("Failed to create processing"))
 
-
+@app.get("/processing/{processing_id}/status")
+def get_status(processing_id: str):
+    client = get_mapflow_client()
+    status = client.get_processing_status(processing_id)
+    return {"status": status.status}
 
 @app.get("/processing/{processing_id}/download", response_model=MapflowDownloadResponse)
 def get_processing_result_json(processing_id: str) -> MapflowDownloadResponse:
