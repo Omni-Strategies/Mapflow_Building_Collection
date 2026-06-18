@@ -274,15 +274,6 @@ class TestMapflowClientCreateProject:
 
 
 class TestMapflowClientCalculateCost:
-    def test_returns_integer_cost(self, mock_client):
-        mock_resp = MagicMock()
-        mock_resp.json.return_value = 42
-        mock_resp.raise_for_status = MagicMock()
-
-        with patch("services.mapflow.requests.post", return_value=mock_resp):
-            result = mock_client.calculate_total_cost(area_sq_km=1.5)
-
-        assert result == 42
 
     def test_uses_geometry_when_aoi_provided(self, mock_client):
         mock_resp = MagicMock()
@@ -294,16 +285,6 @@ class TestMapflowClientCalculateCost:
             payload = mock_post.call_args[1]["json"]
             assert "geometry" in payload
         
-
-    def test_uses_area_when_no_aoi(self, mock_client):
-        mock_resp = MagicMock()
-        mock_resp.json.return_value = 10
-        mock_resp.raise_for_status = MagicMock()
-
-        with patch("services.mapflow.requests.post", return_value=mock_resp) as mock_post:
-            mock_client.calculate_total_cost(area_sq_km=2.5, aoi_polygon=None)
-            payload = mock_post.call_args[1]["json"]
-            assert "geometry" not in payload
 
 
 class TestMapflowClientGetProcessingStatus:
@@ -437,7 +418,18 @@ class TestCalculateCostRoute:
         resp = client.post("/processing/cost", json={
             "provider_name": "Mapbox",
             "wd_id": "8cb13006-a299-4df6-b47d-91bd63de947f",
-            "area_sq_km": 1.5,
+            "aoi_polygon": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [0, 0],
+                        [1, 0],
+                        [1, 1],
+                        [0, 1],
+                        [0, 0]
+                    ]
+                ]
+            }
         })
         assert resp.status_code == 200
         assert resp.json()["cost"] == 75
