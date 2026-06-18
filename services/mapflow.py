@@ -232,6 +232,6 @@ class MapflowClient:
         return response.json()
 
     def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = None) -> Dict[str, Any]:
-        response = requests.post(f"{self.base_url}{path}", headers=headers or self.headers, json=payload)
+        response = requests.post(f"{self.base_url}{path}", headers=headers or self.headers, json=payload, timeout=(3.0, 10000))
         response.raise_for_status()
         return response.json()

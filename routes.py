@@ -1,4 +1,5 @@
 import json
+import time
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -82,7 +83,54 @@ def create_processings(request: MapflowProcessingCreateRequest) -> str:
         return resp.id         
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str("Failed to create processing"))
+    
 
+@app.post("/processing/{processing_id}/statuscheck")
+def create_processings(request: MapflowProcessingCreateRequest) -> str:
+    client = get_mapflow_client()
+    try:
+        resp = client.create_processing(
+            project_id=request.project_id,
+            name=request.name,
+            provider_name=request.provider_name,
+            wd_name=request.wd_name,
+            aoi_polygon=request.aoi_polygon,
+        )
+        processing_id = resp.id         
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str("Failed to create processing"))
+    poll_interval = 300  # 5 minutes
+    timeout = 3600       # 1 hour max
+    elapsed = 0
+
+    try:
+        while elapsed < timeout:
+            status_obj = client.get_processing_status(processing_id)
+            status = status_obj.status
+            print(f"[{elapsed}s elapsed] Processing status: {status}")
+
+            if status == "OK":
+                geojson = client.download_results(processing_id)
+                results = mapflow_geojson_to_propertiesjson(geojson)
+                return MapflowDownloadResponse(properties=results)
+
+            if status in ("FAILED", "CANCELLED", "ERROR"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Processing ended with status: {status}"
+                )
+
+            time.sleep(poll_interval)
+            elapsed += poll_interval
+
+        raise HTTPException(status_code=408, detail="Processing timed out after 1 hour")
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    
+    
 @app.get("/processing/{processing_id}/status")
 def get_status(processing_id: str):
     client = get_mapflow_client()
