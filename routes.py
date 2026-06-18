@@ -85,8 +85,8 @@ def create_processings(request: MapflowProcessingCreateRequest) -> str:
         raise HTTPException(status_code=500, detail=str("Failed to create processing"))
     
 
-@app.post("/processing/{processing_id}/statuscheck")
-def create_processings(request: MapflowProcessingCreateRequest) -> str:
+@app.post("/processing/{processing_id}/statuscheck", response_model=MapflowDownloadResponse)
+def create_processings(request: MapflowProcessingCreateRequest) -> MapflowDownloadResponse:
     client = get_mapflow_client()
     try:
         resp = client.create_processing(
