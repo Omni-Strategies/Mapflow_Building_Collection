@@ -163,7 +163,6 @@ Estimate cost:
 {
   "provider_name": "Mapbox",
   "wd_id": "8cb13006-a299-4df6-b47d-91bd63de947f",
-  "area_sq_km": 1.5,
   "aoi_polygon": {
     "type": "Polygon",
     "coordinates": [
@@ -186,7 +185,6 @@ Create a processing job:
   "name": "Building Analysis",
   "provider_name": "Mapbox",
   "wd_name": "🏠 Buildings",
-  "area_sq_km": 1.5,
   "aoi_polygon": {
     "type": "Polygon",
     "coordinates": [

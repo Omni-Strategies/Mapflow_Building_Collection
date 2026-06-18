@@ -61,7 +61,6 @@ def calculate_cost(request: MapflowCostEstimateRequest) -> dict:
         cost = get_mapflow_client().calculate_total_cost(
             provider_name=request.provider_name,
             wd_id=request.wd_id,
-            area_sq_km=request.area_sq_km,
             aoi_polygon=request.aoi_polygon,
         )
         return {"cost": cost}
@@ -77,7 +76,6 @@ def create_processings(request: MapflowProcessingCreateRequest) -> List[Dict[str
             name=request.name,
             provider_name=request.provider_name,
             wd_name=request.wd_name,
-            area_sq_km=request.area_sq_km,
             aoi_polygon=request.aoi_polygon,
         )
         client.wait_for_processing(resp.id)
