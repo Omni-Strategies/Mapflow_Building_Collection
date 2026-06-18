@@ -139,7 +139,7 @@ class MapflowClient:
         resp = self._get(f"/processings/{processing_id}/v2")
         return MapflowProcessingStatusResponse.model_validate(resp)
 
-    def calculate_total_cost(self, provider_name: str = "Mapbox", wd_id: str = "8cb13006-a299-4df6-b47d-91bd63de947f", area_sq_km: float = 1.5, aoi_polygon: Optional[Geometry] = None) -> int: 
+    def calculate_total_cost(self, provider_name: str = "Mapbox", wd_id: str = "8cb13006-a299-4df6-b47d-91bd63de947f", aoi_polygon: Optional[Geometry] = None) -> int: 
         """Estimate processing cost in credits.
 
         Returns the estimated cost as an integer (credits).
@@ -147,10 +147,11 @@ class MapflowClient:
         payload = {
             "wdId": wd_id,
         }
-        if aoi_polygon is not None and len(aoi_polygon.get("coordinates", [])) > 0:
-            payload["geometry"] = aoi_polygon
-        else:
-            payload["areaSqKm"] = area_sq_km
+        try:
+            if aoi_polygon is not None and len(aoi_polygon.get("coordinates", [])) > 0:
+                payload["geometry"] = aoi_polygon
+        except Exception as e:
+            print(f"Error occurred while processing AOI geometry: {e}")
             
         payload["params"] = {
                 "sourceParams": {
@@ -171,7 +172,6 @@ class MapflowClient:
         name: str = "Building Analysis",
         provider_name: str = "Mapbox",
         wd_name: str = "🏠 Buildings",
-        area_sq_km: float = 1.5,
         aoi_polygon: Optional[Geometry] = None,
     ) -> MapflowProcessingCreateResponse:
         """Create and run an imagery analysis processing (v2 API)."""
@@ -180,7 +180,6 @@ class MapflowClient:
             name=name,
             provider_name=provider_name,
             wd_name=wd_name,
-            area_sq_km=area_sq_km,
             aoi_polygon=aoi_polygon,
         )
         payload = {
@@ -201,17 +200,18 @@ class MapflowClient:
                 {"name": "Classification", "enabled": True},
             ],
         }
-        if request.aoi_polygon is not None:
-            # Handle both bare Geometry and FeatureCollection inputs
-            if request.aoi_polygon.get("type") == "FeatureCollection":
-                geometry = request.aoi_polygon["features"][0]["geometry"]
-            else:
-                geometry = request.aoi_polygon
+        try:
+            if request.aoi_polygon is not None:
+                # Handle both bare Geometry and FeatureCollection inputs
+                if request.aoi_polygon.get("type") == "FeatureCollection":
+                    geometry = request.aoi_polygon["features"][0]["geometry"]
+                else:
+                    geometry = request.aoi_polygon
 
-            if len(geometry.get("coordinates", [])) > 0:
-                payload["geometry"] = geometry
-        else:
-            payload["areaSqKm"] = request.area_sq_km
+                if len(geometry.get("coordinates", [])) > 0:
+                    payload["geometry"] = geometry
+        except Exception as e:
+            print(f"Error occurred while processing AOI geometry: {e}")
 
         resp = self._post("/processings/v2", payload)
         return MapflowProcessingCreateResponse.model_validate(resp)

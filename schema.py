@@ -56,7 +56,7 @@ class MapflowProcessingStatusResponse(BaseModel):
 class MapflowCostEstimateRequest(BaseModel):
     provider_name: str = "Mapbox"
     wd_id: str = "8cb13006-a299-4df6-b47d-91bd63de947f"
-    area_sq_km: float = 1.5
+    
     aoi_polygon: Optional[Geometry] = None
 
     model_config = {"populate_by_name": True}
@@ -75,6 +75,7 @@ class MapflowProcessingCreateRequest(BaseModel):
     name: str = "Building Analysis"
     provider_name: str = "Mapbox"
     wd_name: str = "🏠 Buildings"
+   
     aoi_polygon: Optional[Geometry] = None
 
     model_config = {"populate_by_name": True}
