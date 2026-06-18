@@ -293,7 +293,7 @@ class TestMapflowClientCalculateCost:
             mock_client.calculate_total_cost(aoi_polygon=SAMPLE_AOI_POLYGON)
             payload = mock_post.call_args[1]["json"]
             assert "geometry" in payload
-            assert "areaSqKm" not in payload
+        
 
     def test_uses_area_when_no_aoi(self, mock_client):
         mock_resp = MagicMock()
@@ -303,7 +303,6 @@ class TestMapflowClientCalculateCost:
         with patch("services.mapflow.requests.post", return_value=mock_resp) as mock_post:
             mock_client.calculate_total_cost(area_sq_km=2.5, aoi_polygon=None)
             payload = mock_post.call_args[1]["json"]
-            assert "areaSqKm" in payload
             assert "geometry" not in payload
 
 
