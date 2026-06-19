@@ -34,17 +34,8 @@ def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
         area = props.get("area")
 
         property_dict: Dict[str, Any] = {
-            "owner_id": None,
-            "ratepayer_id": None,
-            "created_by": None,
-            "property_code": None,
             "property_use": class_name or "unknown",
             "prop_class": str(props.get("class_id")) if props.get("class_id") else None,
-            "serial_no": None,
-            "location": None,
-            "population_density": None,
-            "street_name": None,
-            "landmark": None,
             "gps_address": gps_address,
             "no_of_people": 0,
             "no_of_bedrooms": None,
@@ -54,21 +45,6 @@ def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
             "building height in m": height,
             "building area in m^2": area,
             "no_of_storeys": str(round(height / 3)) if height else None,
-            "electoral_area": None,
-            "town": None,
-            "community": None,
-            "ownership_type": None,
-            "permit_status": None,
-            "sanitation_facility_avail": None,
-            "sources_of_water": None,
-            "waste_disposal_method": None,
-            "parcel_no": None,
-            "house_no": None,
-            "acct_no": None,
-            "division_no": None,
-            "rating_zone": None,
-            "rateable_value": None,
-            "lvd_val_no": None,
         }
         area_int = _area_as_int(area)
         if area_int > 1000:
