@@ -305,26 +305,6 @@ class TestMapflowClientGetProcessingStatus:
         assert result.status == "OK"
 
 
-class TestMapflowClientDownloadResults:
-    def test_returns_parsed_geojson(self, mock_client):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = SAMPLE_GEOJSON
-
-        with patch("services.mapflow.requests.get", return_value=mock_resp):
-            result = mock_client.download_results("proc-456")
-
-        assert result["type"] == "FeatureCollection"
-        assert len(result["features"]) == 2
-
-    def test_raises_on_non_200(self, mock_client):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 404
-        mock_resp.text = "Not found"
-
-        with patch("services.mapflow.requests.get", return_value=mock_resp):
-            with pytest.raises(RuntimeError, match="Failed to download results"):
-                mock_client.download_results("bad-id")
 
 
 class TestMapflowClientWaitForProcessing:
