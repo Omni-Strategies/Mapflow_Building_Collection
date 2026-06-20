@@ -217,14 +217,26 @@ class MapflowClient:
         return MapflowProcessingCreateResponse.model_validate(resp)
 
     def download_results(self, processing_id: str) -> dict:
-        response = requests.get(
+        import tempfile, json, os
+        
+        with requests.get(
             f"{self.base_url}/processings/{processing_id}/result",
             headers=self.headers,
-            timeout=30,
-        )
-        if response.status_code != 200:
-            raise RuntimeError(f"Failed to download results: {response.status_code} {response.text}")
-        return response.json()
+            timeout=(10, None),  # no read timeout
+            stream=True,
+        ) as response:
+            if response.status_code != 200:
+                raise RuntimeError(f"Failed to download results: {response.status_code} {response.text}")
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".geojson") as tmp:
+                for chunk in response.iter_content(chunk_size=8192):
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+        
+        with open(tmp_path) as f:
+            geojson = json.load(f)
+        os.unlink(tmp_path)
+        return geojson
 
     def _get(self, path: str) -> Dict[str, Any]:
         response = requests.get(f"{self.base_url}{path}", headers=self.headers)
@@ -232,6 +244,6 @@ class MapflowClient:
         return response.json()
 
     def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = None) -> Dict[str, Any]:
-        response = requests.post(f"{self.base_url}{path}", headers=headers or self.headers, json=payload, timeout=(3.0, 10000))
+        response = requests.post(f"{self.base_url}{path}", headers=headers or self.headers, json=payload, timeout=(10, None))
         response.raise_for_status()
         return response.json()

@@ -7,9 +7,8 @@ from typing import Any, Dict, List, Optional
 import json as _json
 
 from pydantic import json
-from services.geojson_modifier import mapflow_geojson_to_properties, mapflow_geojson_to_properties_json_min
+from services.geo_enrichment import mapflow_geojson_to_propertiesjson, mapflow_geojson_to_properties_json_min
 from services.kml_export import json_to_kml
-from services.geojson_modifier import mapflow_geojson_to_propertiesjson
 from services.mapflow import MapflowClient
 from schema import (
     MapflowCostEstimateRequest,
@@ -95,9 +94,11 @@ def get_status(processing_id: str):
 @app.get("/processing/{processing_id}/download", response_model=MapflowDownloadResponse)
 def get_processing_result_json(processing_id: str) -> MapflowDownloadResponse:
     try:
-        output_path = get_mapflow_client().download_results(processing_id)
-        results = mapflow_geojson_to_propertiesjson(output_path)
-        return MapflowDownloadResponse(properties=results)  # ← wrap it
+        geojson = get_mapflow_client().download_results(processing_id)
+        results = mapflow_geojson_to_propertiesjson(geojson)
+        return MapflowDownloadResponse(properties=results)
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     
