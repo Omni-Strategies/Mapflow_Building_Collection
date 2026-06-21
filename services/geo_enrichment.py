@@ -94,7 +94,6 @@ def _simpledata(placemark, field: str) -> Optional[str]:
 # ──────────────────────────────────────────────────────────────────────────────
 # Directory scanners – cached per process
 # ──────────────────────────────────────────────────────────────────────────────
-
 @lru_cache(maxsize=1)
 def _load_electoral_areas() -> List[Dict[str, Any]]:
     """
@@ -138,12 +137,15 @@ def _load_electoral_areas() -> List[Dict[str, Any]]:
             if geom is None:
                 continue
 
-            # Prefer the <name> tag, then any SimpleData with "name"-like keys,
-            # then fall back to the filename stem.
-            name_el = placemark.find("kml:name", _KML_NS)
-            name = (name_el.text.strip() if name_el is not None and name_el.text else None)
+            # Check Community first (Okaikwei North KML stores the name here),
+            # then fall back to <name> tag, then other SimpleData fields,
+            # then the filename stem.
+            name = _simpledata(placemark, "Community") or _simpledata(placemark, "community")
 
-            # Try common SimpleData field names for area/district label
+            if not name:
+                name_el = placemark.find("kml:name", _KML_NS)
+                name = (name_el.text.strip() if name_el is not None and name_el.text else None)
+
             if not name:
                 for field in ("name", "Name", "District", "district", "Area", "area",
                               "Electoral_Area", "electoral_area"):
@@ -161,7 +163,6 @@ def _load_electoral_areas() -> List[Dict[str, Any]]:
             })
 
     return entries
-
 
 @lru_cache(maxsize=1)
 def _load_communities() -> List[Dict[str, Any]]:
@@ -241,17 +242,6 @@ def get_electoral_area(lon: float, lat: float) -> Optional[str]:
     return None
 
 
-def get_community(lon: float, lat: float) -> Optional[str]:
-    """
-    Return the community name whose polygon contains the point (lon, lat),
-    or None if no community polygon matches.
-    Scans every KML in COMMUNITIES_DIR.
-    """
-    pt = Point(lon, lat)
-    for entry in _load_communities():
-        if entry["geometry"].contains(pt):
-            return entry["name"]
-    return None
 
 
 def enrich_with_geo(lon: float, lat: float) -> Dict[str, Optional[str]]:
@@ -268,7 +258,7 @@ def enrich_with_geo(lon: float, lat: float) -> Dict[str, Optional[str]]:
     """
     return {
         "electoral_area": get_electoral_area(lon, lat),
-        "community": get_community(lon, lat),
+  
     }
 
 
@@ -277,9 +267,7 @@ def list_loaded_electoral_areas() -> List[str]:
     return [e["name"] for e in _load_electoral_areas()]
 
 
-def list_loaded_communities() -> List[str]:
-    """Return the names of all communities loaded from COMMUNITIES_DIR."""
-    return [e["name"] for e in _load_communities()]
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -350,7 +338,7 @@ def _build_property_dict(
         "building area in m^2": area,
         "no_of_storeys": str(round(height / 3)) if height else None,
         "electoral_area": geo["electoral_area"],
-        "community": geo["community"],
+        "community": None,
     }
 
     if not full:
